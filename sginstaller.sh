@@ -1,42 +1,127 @@
 #!/usr/bin/env bash
 
+DOWNLOAD_SUCCESS=false
 
+installPackage(){
+  YUM_CMD=$(which yum)
+  APT_GET_CMD=$(which apt-get)
+  BREW_CMD=$(which brew)
+
+  if [[ ! -z $YUM_CMD ]]; then
+     yum -y install $1
+     if [ $? -ne 0 ]; then
+       echo "false"
+     fi
+  elif [[ ! -z $APT_GET_CMD ]]; then
+     apt-get update &>/dev/null
+     apt-get -y install $1 &>/dev/null
+     if [ $? -ne 0 ]; then
+       echo "false"
+     fi
+  elif [[ ! -z $BREW_CMD ]]; then
+     brew install $1 &>/dev/null
+     if [ $? -ne 0 ]; then
+       echo "false"
+     fi
+  else
+   echo 'false';
+  fi
+}
+
+preCheck(){
+  #check for curl
+  if [ "$(type -t curl)" != "file" ]; then
+    printf "\n Curl is required for this installer.\n\n"
+    exit 5
+  fi
+  #check for terraform
+  if [ "$(type -t terraform)" != "file" ]; then
+    #we will try to install if we can.
+    echo "Terraform is not installed. We will try to install it if we can."
+    echo "Installing..."
+    if [ "$(installPackage terraform)" = "false" ] ; then
+      printf "\n Terraform install failed.\n"
+      printf "\n Terraform is required for this installer.\n"
+      printf " Terraform can be downloaded from: https://www.terraform.io/downloads.html\n"
+      printf " Terrafom can also be installed via the Homebrew, or Linux package installer.\n"
+      printf " If downloading from the Hashicorp webpage, ensure the executable files are in\n your os \$PATH so the supergiant cli can find them.\n\n"
+      exit 5
+    fi
+    echo "Success..."
+  fi
+}
 downloadBin(){
-  distro = $1
-  echo "Downloading ${distro} bin.."
-  ## error check and dump with exit code if fail.
+  distro=$1
+  if [ "$(type -t supergiant)" != "file" ]; then
+    echo "Downloading ${distro} bin..."
+    ## error check and dump with exit code if fail.
+    bin=$(curl -s https://api.github.com/repos/supergiant/supergiant-cli/releases/latest | grep $distro | grep 386 | grep browser_download_url | head -n 1 | cut -d '"' -f 4)
+    echo $bin
+    curl -L $bin --output /usr/local/bin/supergiant
+    chmod 755 /usr/local/bin/supergiant
+    if [ "$(type -t supergiant)" != "file" ]; then
+      printf "\n Supergiant CLI Install Failed.\n\n"
+      exit 5
+    fi
+    echo "Supergiant CLI Install success..."
+fi
 }
 
 
-## Check for cloud creds (prob will do aws by default)
-
-if [[ -z "$AWS_SECRET" ] && [ -z "$AWS_KEY"]; then
-  echo -n "Enter your aws secret key [ENTER]: "
-  read -n 1 AWS_SECRET
-  echo
-
-  echo -n "Enter your aws user key [ENTER]: "
-  read -n 1 AWS_KEY
-  echo
-fi
-
-## Download sg-cli bin
+## Check for requirments.
+preCheck
+ Download sg-cli bin
 case $( uname -s ) in
-linux) downloadBin linux;;
-darwin) downloadBin darwin ;;
-*)     echo "OS not supported";;
+Linux) downloadBin linux;;
+Darwin) downloadBin darwin ;;
+*)     printf "\n Unfortunately the  supergiant quick start script is only compatible with Linux, and Mac OS.\n More to come soon! Additional executables can be found on the supergiant repo, and may be considered experimental.\n https://github.com/supergiant/supergiant-cli/releases\n\n";;
 esac
 
-## supergiant == the name of the cluster we will spin up.
-## use sg spacetime to create new kube record
-#sg spacetime expand supergiant
+printf "\n\nGreat!! Supergiant CLI is now successfully installed on your computer.\n"
+printf "Before we can launch your Supergiant cluster, we need to set up a few things.\n\n"
 
-## commit record to production.
-#sg spacetime commit -y
+printf "In order to connect to your servers through ssh, we will need to be sure you have a key.\n"
+printf "Even if you do not plan to ssh into your servers, they key needs to exist or else the install will fail.\n"
+printf "1. Open your AWS Console, and go to the EC2 service.\n"
+printf "2. Under the \"NETWORK & SECURITY\" section in the left hand column, select \"Key Pairs\"\n"
+printf "3. Select \"Create Key Pair\", and enter \"kube-admin\" for the keypair name.\n\n"
 
-## sg will return kubernetes information
-## Now we deploy the supergiant core to our cluster.
-# sg core install supergiant
+printf "Please type \"YES\" when You have completed these steps to continue: "
+read input
+if [ $input != "YES" ]; then
+  printf "Quiting...\n"
+  exit 0
+fi
+printf "\nThen your all set! Save this keypair to your ~/.ssh directory for access to your cluster over ssh.\n\n"
 
-## sg will return information about the supergiant installation including URL to UI and API info.
-## Based on this info we can open a browser or whatevr we want. 
+printf "Now we need to configure your AWS Credentials into the Supergiant providers DB\n"
+printf "This info is accessed by the CLI during the Kubernetes setup.\n\n"
+printf "When setting up a new provider, use the \'supergiant create spacetime provider\' command.\n"
+printf "You will be asked for AWS Access Key, and your AWS Secret Key.\n"
+printf "The keys will need to have access to have the \"AdministratorAccess\" access policy attached.\n"
+printf "More info here: http://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSGettingStartedGuide/AWSCredentials.html\n\n"
+printf "Press Enter to continue..."
+read
+if [ $(supergiant-cli get spacetime provider | grep -c supergiant-demo) -eq 0 ]; then
+  supergiant create spacetime provider --name supergiant-demo --provider-service aws
+else
+  echo "Looks like your credentials are already installed..."
+fi
+
+printf "\n\nNow we can use the credentials you just setup to launch our first cluster.\n"
+printf "Launching a new cluster can be done using \'supergiant create spacetime\'\n"
+printf "You will be asked to provide the Username, and Password you would like to use with your cluster.\n"
+printf "This can take some time to complete. So grab a cup of coffee and watch the magic.\n\n"
+printf "Press Enter to continue... (There will be a lot of output, but that's just terraform doing it's thing...)"
+read
+if [ $(supergiant-cli get spacetime provider | grep -c supergiant-demo) -eq 0 ]; then
+  supergiant create spacetime --provider supergiant-demo --name supergiant
+else
+  echo "Looks like your cluster is already built or is building..."
+  echo "You can check the status with \'supergiant get spacetime\'"
+  echo "If your cluster reports as failed, you can retry the build with \'supergiant create spacetime --name supergiant --retry"
+  exit 0
+fi
+
+printf "\n\n\nLooks like your cluster is built.\n"
+printf "For more information on your cluster run, \'supergiant get spacetime\'"

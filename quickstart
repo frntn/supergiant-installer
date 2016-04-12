@@ -5,4 +5,4 @@
 
 # find latest release
 release=$(curl -s https://api.github.com/repos/supergiant/supergiant-installer/releases/latest | grep tag_name | awk '{print $2}' | sed 's/"//g' | sed 's/,//g')
-curl -L "https://raw.githubusercontent.com/supergiant/supergiant-installer/${release}/sginstaller.sh" | bash
+bash <(curl -L "https://raw.githubusercontent.com/supergiant/supergiant-installer/${release}/sginstaller.sh")

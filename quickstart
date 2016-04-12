@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 ## This acts as a pointer to the real script.
-#This script should never change if possible. 
+#This script should never change if possible.
 
 # find latest release
 release=$(curl -s https://api.github.com/repos/supergiant/supergiant-installer/releases/latest | grep tag_name | awk '{print $2}' | sed 's/"//g' | sed 's/,//g')
-bash<<(curl -L "https://raw.githubusercontent.com/supergiant/supergiant-installer/${release}/sginstaller.sh")
+curl -L "https://raw.githubusercontent.com/supergiant/supergiant-installer/${release}/sginstaller.sh" | bash

@@ -70,7 +70,7 @@ fi
 
 ## Check for requirments.
 preCheck
- Download sg-cli bin
+ #Download sg-cli bin
 case $( uname -s ) in
 Linux) downloadBin linux;;
 Darwin) downloadBin darwin ;;
@@ -102,7 +102,7 @@ printf "The keys will need to have access to have the \"AdministratorAccess\" ac
 printf "More info here: http://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSGettingStartedGuide/AWSCredentials.html\n\n"
 printf "Press Enter to continue..."
 read
-if [ $(supergiant-cli get spacetime provider | grep -c supergiant-demo) -eq 0 ]; then
+if [ $(supergiant get spacetime provider | grep -c supergiant-demo) -eq 0 ]; then
   supergiant create spacetime provider --name supergiant-demo --provider-service aws
 else
   echo "Looks like your credentials are already installed..."
@@ -114,8 +114,9 @@ printf "You will be asked to provide the Username, and Password you would like t
 printf "This can take some time to complete. So grab a cup of coffee and watch the magic.\n\n"
 printf "Press Enter to continue... (There will be a lot of output, but that's just terraform doing it's thing...)"
 read
-if [ $(supergiant-cli get spacetime provider | grep -c supergiant-demo) -eq 0 ]; then
+if [ $(supergiant get spacetime provider | grep -c supergiant-demo) -eq 0 ]; then
   supergiant create spacetime --provider supergiant-demo --name supergiant
+  supergiant create core
 else
   echo "Looks like your cluster is already built or is building..."
   echo "You can check the status with \'supergiant get spacetime\'"

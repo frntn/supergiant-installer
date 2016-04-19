@@ -2,29 +2,48 @@
 
 DOWNLOAD_SUCCESS=false
 
+terraFail() {
+  printf "\n Terraform install failed.\n"
+  printf "\n Terraform is required for this installer.\n"
+  printf " Terraform can be downloaded from: https://www.terraform.io/downloads.html\n"
+  printf " Terrafom can also be installed via the Homebrew, or Linux package installer.\n"
+  printf " If downloading from the Hashicorp webpage, ensure the executable files are in\n your os \$PATH so the supergiant cli can find them.\n\n"
+  exit 5
+}
+
 installPackage(){
   YUM_CMD=$(which yum)
   APT_GET_CMD=$(which apt-get)
   BREW_CMD=$(which brew)
+  VERSION=0.6.14
+  MAC_LOCATION="https://releases.hashicorp.com/terraform/${VERSION}/terraform_${VERSION}_darwin_amd64.zip"
+  LINUX_LOCATION="https://releases.hashicorp.com/terraform/${VERSION}/terraform_${VERSION}_linux_amd64.zip"
 
   if [[ ! -z $YUM_CMD ]]; then
      yum -y install $1
      if [ $? -ne 0 ]; then
-       echo "false"
+       terraFail
      fi
   elif [[ ! -z $APT_GET_CMD ]]; then
-     apt-get update &>/dev/null
-     apt-get -y install $1 &>/dev/null
+     sudo apt-get update
+     sudo apt-get -y install $1
      if [ $? -ne 0 ]; then
-       echo "false"
+       sudo apt-get -y install unzip
+       sudo curl -L $LINUX_LOCATION --output /tmp/terraform.zip
+       sudo unzip -o /tmp/terraform.zip -d /usr/local/bin
+         if [ $? -ne 0 ]; then
+           terraFail
+         fi
      fi
   elif [[ ! -z $BREW_CMD ]]; then
-     brew install $1 &>/dev/null
+     brew install $1
      if [ $? -ne 0 ]; then
-       echo "false"
+       curl -L $MAC_LOCATION --output /tmp/terraform.zip
+       unzip -o /tmp/terraform.zip -d /usr/local/bin
+         if [ $? -ne 0 ]; then
+           terraFail
+         fi
      fi
-  else
-   echo 'false';
   fi
 }
 
@@ -39,14 +58,7 @@ preCheck(){
     #we will try to install if we can.
     echo "Terraform is not installed. We will try to install it if we can."
     echo "Installing..."
-    if [ "$(installPackage terraform)" = "false" ] ; then
-      printf "\n Terraform install failed.\n"
-      printf "\n Terraform is required for this installer.\n"
-      printf " Terraform can be downloaded from: https://www.terraform.io/downloads.html\n"
-      printf " Terrafom can also be installed via the Homebrew, or Linux package installer.\n"
-      printf " If downloading from the Hashicorp webpage, ensure the executable files are in\n your os \$PATH so the supergiant cli can find them.\n\n"
-      exit 5
-    fi
+    installPackage terraform
     echo "Success..."
   fi
 }
@@ -57,8 +69,13 @@ downloadBin(){
     ## error check and dump with exit code if fail.
     bin=$(curl -s https://api.github.com/repos/supergiant/supergiant-cli/releases/latest | grep $distro | grep 386 | grep browser_download_url | head -n 1 | cut -d '"' -f 4)
     echo $bin
-    curl -L $bin --output /usr/local/bin/supergiant
-    chmod 755 /usr/local/bin/supergiant
+      if [ $distro == linux ]; then
+        sudo curl -L $bin --output /usr/local/bin/supergiant
+        sudo chmod 755 /usr/local/bin/supergiant
+      else
+        curl -L $bin --output /usr/local/bin/supergiant
+        chmod 755 /usr/local/bin/supergiant
+      fi
     if [ "$(type -t supergiant)" != "file" ]; then
       printf "\n Supergiant CLI Install Failed.\n\n"
       exit 5

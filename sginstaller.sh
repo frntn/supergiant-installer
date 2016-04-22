@@ -131,7 +131,7 @@ printf "You will be asked to provide the Username, and Password you would like t
 printf "This can take some time to complete. So grab a cup of coffee and watch the magic.\n\n"
 printf "Press Enter to continue... (There will be a lot of output, but that's just terraform doing it's thing...)"
 read
-if [ $(supergiant get spacetime provider | grep -c supergiant-demo) -eq 0 ]; then
+if [ $(supergiant get spacetime | grep -c supergiant-demo) -eq 0 ]; then
   supergiant create spacetime --provider supergiant-demo --name supergiant
   supergiant create core
 else

@@ -140,6 +140,7 @@ else
   echo "If your cluster reports as failed, you can retry the build with \'supergiant create spacetime --name supergiant --retry"
   exit 0
 fi
+supergiant list spacetime supergiant
 
 printf "\n\n\nLooks like your cluster is built.\n"
 printf "For more information on your cluster run, \'supergiant get spacetime\'"

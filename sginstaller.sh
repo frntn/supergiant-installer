@@ -38,8 +38,9 @@ installPackage(){
   elif [[ ! -z $BREW_CMD ]]; then
      brew install $1
      if [ $? -ne 0 ]; then
-       curl -L $MAC_LOCATION --output /tmp/terraform.zip
-       unzip -o /tmp/terraform.zip -d /usr/local/bin
+       echo "You may need to enter your admin password here..."
+       sudo curl -L $MAC_LOCATION --output /tmp/terraform.zip
+       sudo unzip -o /tmp/terraform.zip -d /usr/local/bin
          if [ $? -ne 0 ]; then
            terraFail
          fi
@@ -75,6 +76,11 @@ downloadBin(){
       else
         curl -L $bin --output /usr/local/bin/supergiant
         chmod 755 /usr/local/bin/supergiant
+        if [ $? -ne 0 ]; then
+          echo "You may need to enter your admin password here..."
+          sudo curl -L $bin --output /usr/local/bin/supergiant
+          sudo chmod 755 /usr/local/bin/supergiant
+        fi
       fi
     if [ "$(type -t supergiant)" != "file" ]; then
       printf "\n Supergiant CLI Install Failed.\n\n"

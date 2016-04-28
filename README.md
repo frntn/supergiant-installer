@@ -5,7 +5,7 @@ The Quickstart Installer for Supergiant
 
 
 ##Quickstart Command
-`bash <(curl -L http://tinyurl.com/jejjjw3)`
+`bash <(curl -L https://supergiant.io/installer)`
 
 # License
 

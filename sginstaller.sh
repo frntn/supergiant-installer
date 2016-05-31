@@ -143,7 +143,7 @@ if [ $(supergiant get spacetime | grep -c supergiant-demo) -eq 0 ]; then
 else
   echo "Looks like your cluster is already built or is building..."
   echo "You can check the status with \'supergiant get spacetime\'"
-  echo "If your cluster reports as failed, you can retry the build with \'supergiant create spacetime --name supergiant --retry"
+  echo "If your cluster reports as failed, you can retry the build with \'supergiant create spacetime --retry supergiant"
   exit 0
 fi
 supergiant list spacetime supergiant

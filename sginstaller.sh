@@ -90,7 +90,7 @@ downloadBin(){
 fi
 }
 
-
+{
 ## Check for requirments.
 preCheck
  #Download sg-cli bin
@@ -150,3 +150,4 @@ supergiant list spacetime supergiant
 
 printf "\n\n\nLooks like your cluster is built.\n"
 printf "For more information on your cluster run, \'supergiant get spacetime\'"
+}
